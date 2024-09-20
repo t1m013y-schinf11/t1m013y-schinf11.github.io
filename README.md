@@ -71,6 +71,40 @@ int RingBuf_Queue(RingBuf_t *buffer_h, const char data)
 {
   return RingBuf__Queue(buffer_h, data, false);
 }
+
+int RingBuf__Queue(RingBuf_t *buffer_h, const char data, bool _ign_lock) {  // Auxiliary function, not recommended to use
+  if (!buffer_h->_wInit)
+    return 0;
+  if (!_ign_lock) {
+    if (!RingBuf__Lock(buffer_h))
+      return 0;
+  }
+  
+  if (buffer_h->elements_count < buffer_h->buffer_size) {
+    char *write_addr = (char*)(buffer_h->buffer + (buffer_h->tail_index + buffer_h->elements_count) % buffer_h->buffer_size);
+    
+    *write_addr = data;
+    ++buffer_h->elements_count;
+    
+    if (!_ign_lock)
+      RingBuf__Unlock(buffer_h);
+    return 1;
+  } else if (buffer_h->elements_count == buffer_h->buffer_size) {
+    char *write_addr = (char*)(buffer_h->buffer + buffer_h->tail_index);
+    
+    ++buffer_h->tail_index;
+    buffer_h->tail_index %= buffer_h->buffer_size;
+    *write_addr = data;
+    
+    if (!_ign_lock)
+      RingBuf__Unlock(buffer_h);
+    return 1;
+  } else {
+    if (!_ign_lock)
+      RingBuf__Unlock(buffer_h);
+    return 0;
+  }
+}
 ```
 
 > Adds one element to buffer. If buffer is already full, it will overwrite the oldest element of the buffer.
@@ -80,6 +114,14 @@ int RingBuf_Dequeue(RingBuf_t *buffer_h, char *data)
 {
   return RingBuf__Dequeue(buffer_h, data, false);
 }
+
+int RingBuf__Dequeue(RingBuf_t *buffer_h, char *data, bool _ign_lock) {  // Auxiliary function, not recommended to use
+  if (!buffer_h->_wInit)
+    return 0;
+  if (!_ign_lock) {
+    if (!RingBuf__Lock(buffer_h))
+      return 0;
+  }
 ```
 
 > Reads one (oldest) element from the buffer and removes this element. If data is a null pointer, the element from the buffer will be removed but it will not be saved.
