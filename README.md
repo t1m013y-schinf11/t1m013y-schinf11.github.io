@@ -125,3 +125,5 @@ int RingBuf__Dequeue(RingBuf_t *buffer_h, char *data, bool _ign_lock) {  // Auxi
 ```
 
 > Reads one (oldest) element from the buffer and removes this element. If data is a null pointer, the element from the buffer will be removed but it will not be saved.
+
+[число Пи](PI.md)
